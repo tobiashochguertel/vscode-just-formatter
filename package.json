@@ -53,19 +53,26 @@
   "scripts": {
     "package": "pnpm run compile:production",
     "vscode:prepublish": "pnpm run package",
+
     "compile:esbuild": "del-cli ./out-esbuild && pnpm exec tsc -p tsconfig.esbuild.json",
+    "compile:esbuild:watch": "del-cli ./out-esbuild && pnpm exec tsc -w -p tsconfig.esbuild.json",
     "compile:dev": "del-cli ./out && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js",
+    "compile:dev:watch": "del-cli ./out && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --watch",
     "compile:production": "del-cli ./out && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production",
-    "watch": "npm-run-all -p watch:**",
-    "_watch:test": "vscode-test -w",
-    "watch:checks:lint": "fd --type f -e ts -e json -e mjs --hidden . | entr pnpm run checks:lint",
-    "_watch:build": "pnpm run compile:dev",
-    "_pretest": "del-cli ./out && pnpm run checks && pnpm run compile:dev",
-    "pretest": "pnpm run checks && pnpm run compile:dev",
-    "checks": "npm-run-all -p checks:*",
+    "compile:production:watch": "del-cli ./out && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production --watch",
+
+    "checks": "npm-run-all -n -l -p \"checks:!(watch)\"",
+    "checks:watch": "npm-run-all -n -l -p checks:*:watch",
     "checks:lint": "pnpm exec eslint --flag unstable_ts_config ./esbuild.ts ./src",
+    "checks:lint:watch": "fd --type f -e ts -e json -e mjs --hidden . | entr pnpm run checks:lint",
     "checks:types": "tsc --noEmit",
-    "test": "vscode-test"
+    "checks:types:watch": "tsc -w --noEmit",
+
+    "test": "npm-run-all checks compile:dev vsc-test",
+    "test:watch": "npm-run-all -n -l -s checks compile:dev -p vsc-test:watch checks:watch compile:dev:watch",
+
+    "vsc-test": "vscode-test",
+    "vsc-test:watch": "vscode-test --watch-files ./out -w"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
