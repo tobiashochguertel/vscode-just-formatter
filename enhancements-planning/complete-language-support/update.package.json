@@ -1,0 +1,24 @@
+{
+    "contributes": {
+        "languages": [
+          {
+            "id": "just",
+            "aliases": [ "Justfile", "just" ],
+            "extensions": [ ".justfile", ".just" ],
+            "configuration": "./language-configuration.json"
+          }
+        ],
+        "configurationDefaults": {
+          "[just]": {
+            "editor.defaultFormatter": "TobiasHochguertel.just-formatter"
+          }
+        },
+        "grammars": [
+          {
+            "language": "just",
+            "scopeName": "source.just",
+            "path": "./syntaxes/just.tmLanguage.json"
+          }
+        ]
+      },
+}

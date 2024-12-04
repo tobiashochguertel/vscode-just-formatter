@@ -1,15 +1,47 @@
-import * as assert from 'assert';
+import * as assert from "assert";
+import * as vscode from "vscode";
+import * as path from "path";
+import * as fs from "fs";
+import { execSync } from "child_process";
 
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
-import * as vscode from 'vscode';
-// import * as myExtension from '../../extension';
+suite("Just Formatter Extension Tests", function () {
+	const sampleFilePath = path.join(__dirname, "../../test-fixtures/sample.justfile");
+	const formattedFilePath = path.join(__dirname, "../../test-fixtures/formatted.justfile");
 
-suite('Extension Test Suite', () => {
-	vscode.window.showInformationMessage('Start all tests.');
+	setup(async function () {
+		// Ensure the test fixture exists before running the tests.
+		if (!fs.existsSync(sampleFilePath)) {
+			throw new Error("Test fixture sample.justfile is missing.");
+		}
+	});
 
-	test('Sample test', () => {
-		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
+	teardown(async function () {
+		// Cleanup: Remove any test output files if needed.
+		if (fs.existsSync(formattedFilePath)) {
+			fs.unlinkSync(formattedFilePath);
+		}
+	});
+
+	test("Extension is activated", async function () {
+		const isActive = vscode.extensions.getExtension("TobiasHochguertel.just-formatter")?.isActive;
+		assert.strictEqual(isActive, true, "Extension should be activated.");
+	});
+
+	test("Formatter produces expected output", async function () {
+		const document = await vscode.workspace.openTextDocument(sampleFilePath);
+		const editor = await vscode.window.showTextDocument(document);
+
+		// Invoke the formatting command programmatically.
+		await vscode.commands.executeCommand("editor.action.formatDocument");
+
+		const formattedContent = editor.document.getText();
+
+		// Run the `just --fmt --unstable` CLI directly for comparison.
+		const expectedContent = execSync("just --fmt --unstable", {
+			cwd: path.dirname(sampleFilePath),
+		}).toString();
+
+		// Check if the formatted content matches the expected content.
+		assert.strictEqual(formattedContent, expectedContent, "Formatted content should match `just --fmt` output.");
 	});
 });

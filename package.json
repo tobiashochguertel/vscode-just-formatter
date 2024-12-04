@@ -3,21 +3,46 @@
   "displayName": "just-formatter",
   "description": "A formatter plugin for justfiles",
   "version": "0.0.1",
+  "publisher": "TobiasHochguertel",
+  "author": {
+    "name": "Tobias Hochgürtel",
+    "url": "https://github.com/tobiashochguertel"
+  },
+  "license": "MIT",
   "engines": {
     "vscode": "^1.95.0"
   },
   "categories": [
-    "Other"
+    "Formatters",
+    "Programming Languages"
   ],
-  "activationEvents": [],
+  "icon": "assets/icon.png",
+  "keywords": [
+    "formatter",
+    "just",
+    "justfile",
+    "vscode"
+  ],
+  "repository": {
+    "url": "https://gitea.hochguertel.work/vscode/just-formatter.git"
+  },
+  "activationEvents": [
+    "onLanguage:just"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
+    "languages": [
       {
-        "command": "just-formatter.helloWorld",
-        "title": "Hello World"
+        "id": "just",
+        "aliases": [ "Justfile", "just" ],
+        "extensions": [ ".justfile", ".just" ],
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "[just]": {
+        "editor.defaultFormatter": "TobiasHochguertel.just-formatter"
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",

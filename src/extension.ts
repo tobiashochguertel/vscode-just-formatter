@@ -1,26 +1,27 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
+import { exec } from "child_process";
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+    const formatter = vscode.languages.registerDocumentFormattingEditProvider(
+        { language: "just" },
+        {
+            provideDocumentFormattingEdits(document: vscode.TextDocument) {
+                return new Promise((resolve, reject) => {
+                    exec("just --fmt --unstable", { cwd: vscode.workspace.rootPath }, (err, stdout) => {
+                        if (err) {
+                            vscode.window.showErrorMessage("Error formatting Justfile: " + err.message);
+                            return reject(err);
+                        }
+                        const fullRange = new vscode.Range(
+                            document.positionAt(0),
+                            document.positionAt(document.getText().length)
+                        );
+                        resolve([vscode.TextEdit.replace(fullRange, stdout)]);
+                    });
+                });
+            },
+        }
+    );
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "just-formatter" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('just-formatter.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from just-formatter!');
-	});
-
-	context.subscriptions.push(disposable);
+    context.subscriptions.push(formatter);
 }
-
-// This method is called when your extension is deactivated
-export function deactivate() {}
