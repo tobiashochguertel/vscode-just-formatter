@@ -23,7 +23,10 @@ suite("Just Formatter Extension Tests", function () {
 	});
 
 	test("Extension is activated", async function () {
-		const isActive = vscode.extensions.getExtension("TobiasHochguertel.just-formatter")?.isActive;
+		const extension = vscode.extensions.getExtension("TobiasHochguertel.just-formatter");
+		assert.ok(extension, "Extension should be found");
+		await extension?.activate();
+		const isActive = extension?.isActive;
 		assert.strictEqual(isActive, true, "Extension should be activated.");
 	});
 
@@ -37,7 +40,7 @@ suite("Just Formatter Extension Tests", function () {
 		const formattedContent = editor.document.getText();
 
 		// Run the `just --fmt --unstable` CLI directly for comparison.
-		const expectedContent = execSync("just --fmt --unstable", {
+		const expectedContent = execSync(`just --fmt --unstable --justfile ${path.basename(sampleFilePath)}`, {
 			cwd: path.dirname(sampleFilePath),
 		}).toString();
 
