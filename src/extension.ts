@@ -7,7 +7,7 @@ export function activate(context: vscode.ExtensionContext) {
         {
             provideDocumentFormattingEdits(document: vscode.TextDocument) {
                 return new Promise((resolve, reject) => {
-                    exec("just --fmt --unstable", { cwd: vscode.workspace.rootPath }, (err, stdout) => {
+                    exec("just --fmt --unstable --justfile", { cwd: vscode.workspace.rootPath }, (err, stdout) => {
                         if (err) {
                             vscode.window.showErrorMessage("Error formatting Justfile: " + err.message);
                             return reject(err);

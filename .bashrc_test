@@ -1,0 +1,43 @@
+# Test environment configuration for vscode-pattern-links
+
+# Basic PATH setup
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+# Node.js environment
+export NODE_ENV="test"
+
+# VSCode test specific
+export VSCODE_TEST_DATA_DIR="$(pwd)/test-user-data"
+export VSCODE_EXTENSION_DIR="$(pwd)/test-extensions"
+
+# Logging configuration
+export DEBUG_LOG_LEVEL="debug"
+export DEBUG_LOG_DIR="$(pwd)/logs/shell_environment"
+
+# Ensure test logs directory exists
+if [ ! -d "$DEBUG_LOG_DIR" ]; then
+    mkdir -p "$DEBUG_LOG_DIR"
+fi
+
+# Disable unnecessary features for testing
+export VSCODE_CLI_NO_UPDATE_NOTIFIER=1
+export VSCODE_CLI_NO_TELEMETRY=1
+
+# Set terminal colors for better test output visibility
+export TERM="xterm-256color"
+export CLICOLOR=1
+export LSCOLORS=GxFxCxDxBxegedabagaced
+
+# Useful aliases for testing
+alias test-clean="npm run clean:out:tests"
+alias test-run="npm run tests"
+alias test-logs="cd $DEBUG_LOG_DIR && ls -la"
+
+# Print test environment info
+echo "VSCode Pattern Links Test Environment"
+echo "===================================="
+echo "Node version: $(node --version)"
+echo "NPM version:  $(npm --version)"
+echo "Test data:    $VSCODE_TEST_DATA_DIR"
+echo "Log dir:      $DEBUG_LOG_DIR"
+echo "===================================="

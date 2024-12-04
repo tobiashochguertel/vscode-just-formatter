@@ -34,8 +34,14 @@
     "languages": [
       {
         "id": "just",
-        "aliases": [ "Justfile", "just" ],
-        "extensions": [ ".justfile", ".just" ],
+        "aliases": [
+          "Justfile",
+          "just"
+        ],
+        "extensions": [
+          ".justfile",
+          ".just"
+        ]
       }
     ],
     "configurationDefaults": {
@@ -45,30 +51,30 @@
     }
   },
   "scripts": {
+    "package": "pnpm run compile:production",
     "vscode:prepublish": "pnpm run package",
-    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+    "compile:dev": "pnpm run checks && node esbuild.js",
+    "compile:production": "pnpm run checks && node esbuild.js --production",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
-    "check-types": "tsc --noEmit",
-    "lint": "eslint src",
+    "pretest": "del-cli ./out && pnpm run checks && pnpm run compile:dev",
+    "checks": "npm-run-all -p checks:*",
+    "checks:lint": "eslint src",
+    "checks:check-types": "tsc --noEmit",
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.95.0",
     "@types/mocha": "^10.0.9",
     "@types/node": "20.x",
+    "@types/vscode": "^1.95.0",
     "@typescript-eslint/eslint-plugin": "^8.10.0",
     "@typescript-eslint/parser": "^8.7.0",
-    "eslint": "^9.13.0",
-    "esbuild": "^0.24.0",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.6.3",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "del-cli": "^6.0.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.13.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.6.3"
   }
 }

@@ -1,2 +1,0 @@
-foo:
-    echo "Hello, World!"
