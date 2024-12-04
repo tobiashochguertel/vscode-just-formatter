@@ -1,12 +1,13 @@
 {
 	"compilerOptions": {
 		// Module and Target Settings
-		// "module": "commonjs",
 		"module": "ESNext",
 		"target": "ES2022",
 		"lib": [ "ES2022" ],
 		"moduleResolution": "node",
 		"esModuleInterop": true,
+		"types": [ "node", "mocha" ],
+		"allowJs": true,
 
 		// Strict Type Checking
 		"strict": true,
@@ -47,32 +48,9 @@
 		"forceConsistentCasingInFileNames": true,
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true
-
-
-		// "module": "ESNext",
-		// "target": "ES2022",
-		// "lib": [
-		// 	"ES2022"
-		// ],
-		// "moduleResolution": "node",
-		// "esModuleInterop": true,
-		// "sourceMap": true,
-		// "rootDir": "src",
-		// // Module Resolution
-		// "baseUrl": ".",
-		// "paths": {
-		// 	"*": [ "node_modules/*" ]
-		// },
-		// "resolveJsonModule": true,
-		// "strict": true /* enable all strict type-checking options */
-		/* Additional Checks */
-		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
-		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
-		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
 	},
 	"include": [
 		"src/**/*",
-		".vscode-test.mjs"
 	],
 	"exclude": [
 		"node_modules",

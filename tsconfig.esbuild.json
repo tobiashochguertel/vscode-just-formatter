@@ -1,0 +1,17 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "module": "CommonJS",
+        "rootDir": ".",
+
+        "outDir": "out-esbuild",
+    },
+    "include": [
+        "esbuild.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        ".vscode-test",
+        "out"
+    ]
+}

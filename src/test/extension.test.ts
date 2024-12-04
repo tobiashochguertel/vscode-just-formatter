@@ -3,22 +3,25 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { execSync } from "child_process";
+import { suite } from "node:test";
 
 suite("Just Formatter Extension Tests", function () {
-	const sampleFilePath = path.join(__dirname, "../../test-fixtures/sample.justfile");
-	const formattedFilePath = path.join(__dirname, "../../test-fixtures/formatted.justfile");
+	const fixturesPath = path.join(__dirname, "../../test-fixtures");
+	const sampleFilePath = path.normalize(path.join(fixturesPath, `sample.justfile`));
+	const formattedSampleFilePath = path.normalize(path.join(fixturesPath, `/formatted.justfile`));
 
 	setup(async function () {
 		// Ensure the test fixture exists before running the tests.
 		if (!fs.existsSync(sampleFilePath)) {
 			throw new Error("Test fixture sample.justfile is missing.");
 		}
+		createFormattedSample(sampleFilePath, formattedSampleFilePath);
 	});
 
 	teardown(async function () {
 		// Cleanup: Remove any test output files if needed.
-		if (fs.existsSync(formattedFilePath)) {
-			fs.unlinkSync(formattedFilePath);
+		if (fs.existsSync(formattedSampleFilePath)) {
+			fs.unlinkSync(formattedSampleFilePath);
 		}
 	});
 
@@ -39,12 +42,21 @@ suite("Just Formatter Extension Tests", function () {
 
 		const formattedContent = editor.document.getText();
 
-		// Run the `just --fmt --unstable` CLI directly for comparison.
-		const expectedContent = execSync(`just --fmt --unstable --justfile ${path.basename(sampleFilePath)}`, {
-			cwd: path.dirname(sampleFilePath),
-		}).toString();
+		const expectedFormattedContent = fs.readFileSync(formattedSampleFilePath, 'utf8');
 
 		// Check if the formatted content matches the expected content.
-		assert.strictEqual(formattedContent, expectedContent, "Formatted content should match `just --fmt` output.");
+		assert.strictEqual(formattedContent, expectedFormattedContent, "Formatted content should match `just --fmt` output.");
 	});
 });
+
+/**
+ * Creates a formatted sample file by copying the original sample and applying Just formatting.
+ * @param sample - Path to the original sample Justfile.
+ * @param formatted - Path where the formatted sample will be saved.
+ */
+function createFormattedSample(sample: string, formatted: string) {
+	fs.copyFileSync(sample, formatted);
+	execSync(`just --fmt --unstable --justfile ${path.basename(formatted)}`, {
+		cwd: path.dirname(formatted),
+	}).toString();
+}

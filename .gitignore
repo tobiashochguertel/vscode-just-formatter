@@ -10,6 +10,7 @@ node_modules/
 
 # Build outputs
 out/
+out-esbuild/
 dist/
 *.vsix
 
@@ -67,3 +68,5 @@ out/test-logs
 # *.log
 
 generated-prompts
+test-workplace
+logs
