@@ -68,5 +68,5 @@ out/test-logs
 # *.log
 
 generated-prompts
-test-workplace
+test-workspace
 logs
