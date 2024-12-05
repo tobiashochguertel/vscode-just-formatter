@@ -150,7 +150,7 @@ backup_file() {
     local target=$2
 
     if [ ! -e "$source" ]; then
-        debug "Source $source doesn't exist, skipping backup"
+        log_debug "Source $source doesn't exist, skipping backup"
         return 0
     fi
 
@@ -163,7 +163,7 @@ backup_file() {
         fi
     fi
 
-    debug "Backing up $source to $target"
+    log_debug "Backing up $source to $target"
     if [ -d "$source" ]; then
         mv "$source" "$target" || handle_error "Failed to backup directory $source"
     else
@@ -197,7 +197,7 @@ restore_original_state() {
 
 # Package management functions
 modify_package_json() {
-    debug "Modifying package.json scripts to use npm"
+    log_debug "Modifying package.json scripts to use npm"
     local temp_file="temp.json"
 
     if ! jq '.scripts |= with_entries(.value |= gsub("pnpm"; "npm"))' package.json >"$temp_file"; then
@@ -246,7 +246,7 @@ do_package() {
 
     # Step 3: Handle npm node_modules
     if [ -d "${BACKUP_FILES["npm_node_modules"]}" ]; then
-        debug "Found existing npm node_modules"
+        log_debug "Found existing npm node_modules"
         backup_file "${BACKUP_FILES["npm_node_modules"]}" "node_modules"
     fi
 
