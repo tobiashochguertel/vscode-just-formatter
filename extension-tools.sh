@@ -274,18 +274,20 @@ backup_file() {
 }
 
 # Package management functions
-modify_package_json() {
-    local item=$1 # "node_modules" or "package.json"
-    local npm_backup="${BACKUP_FILES[npm_$item]}"
-    log_debug "Modifying ${npm_backup} scripts to use npm"
+modify_npm_package_json() {
+    log_debug "Modifying npm-package.json scripts to use npm"
     local temp_file="temp.json"
-
-    if ! jq '.scripts |= with_entries(.value |= gsub("pnpm"; "npm"))' "${npm_backup}" >"$temp_file"; then
-        handle_error "Failed to modify ${npm_backup}"
+    if [ -f "$temp_file" ]; then
+        log_debug "Removing existing temporary file: $temp_file"
+        rm "$temp_file" || handle_error "Failed to remove existing temporary file"
     fi
 
-    mv "$temp_file" "${npm_backup}" || handle_error "Failed to update ${npm_backup}"
-    log "Updated ${npm_backup} to use npm commands"
+    if ! jq '.scripts |= with_entries(.value |= gsub("pnpm"; "npm"))' npm-package.json >"$temp_file"; then
+        handle_error "Failed to modify npm-package.json"
+    fi
+
+    mv "$temp_file" "npm-package.json" || handle_error "Failed to update npm-package.json"
+    log "Updated npm-package.json to use npm commands"
 }
 
 run_npm_install() {
@@ -339,7 +341,7 @@ switch_to_npm() {
         log_debug "No existing npm package.json, creating modified version"
         # Create npm version of package.json if it doesn't exist
         cp "${BACKUP_FILES["package.json"]}" "${BACKUP_FILES["npm_package_json"]}" || handle_error "Failed to create npm package.json"
-        modify_package_json "package.json"
+        modify_npm_package_json
         create_symlink "${BACKUP_FILES["npm_package_json"]}" "package.json"
     fi
 
