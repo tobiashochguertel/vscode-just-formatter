@@ -46,7 +46,9 @@
     ],
     "formatters": [
       {
-        "selector": ["source.just"],
+        "selector": [
+          "source.just"
+        ],
         "provider": "./dist/formatter.js"
       }
     ],
@@ -56,9 +58,18 @@
       }
     }
   },
+  "vsce": {
+    "dependencies": true,
+    "yarn": false,
+    "pnpm": true
+  },
   "scripts": {
-    "package": "pnpm run compile:production",
-    "vscode:prepublish": "pnpm run package",
+    "_package": "pnpm run compile:production",
+    "_vscode:prepublish": "pnpm run package",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+    "package": "pnpm vsce package --no-dependencies",
+    "publish": "pnpm vsce publish --no-dependencies",
 
     "compile:esbuild": "del-cli ./out-esbuild && pnpm exec tsc -p tsconfig.esbuild.json",
     "compile:esbuild:watch": "del-cli ./out-esbuild && pnpm exec tsc -w -p tsconfig.esbuild.json",
@@ -66,17 +77,14 @@
     "compile:dev:watch": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --watch",
     "compile:production": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production",
     "compile:production:watch": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production --watch",
-
     "checks": "npm-run-all -n -l -p \"checks:!(watch)\"",
     "checks:watch": "npm-run-all -n -l -p checks:*:watch",
     "checks:lint": "pnpm exec eslint --flag unstable_ts_config ./esbuild.ts ./src",
     "checks:lint:watch": "fd --type f -e ts -e json -e mjs --hidden . | entr pnpm run checks:lint",
     "checks:types": "tsc --noEmit",
     "checks:types:watch": "tsc -w --noEmit",
-
     "test": "npm-run-all checks compile:dev vsc-test",
     "test:watch": "npm-run-all -n -l -s checks compile:dev -p vsc-test:watch checks:watch compile:dev:watch",
-
     "vsc-test": "vscode-test",
     "vsc-test:watch": "vscode-test --watch-files ./out -w"
   },
@@ -88,6 +96,7 @@
     "@typescript-eslint/parser": "^8.17.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.1",
     "del-cli": "^6.0.0",
     "esbuild": "^0.24.0",
     "eslint": "^9.16.0",
