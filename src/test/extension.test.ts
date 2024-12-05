@@ -6,11 +6,15 @@ import { execSync } from "child_process";
 import { suite } from "node:test";
 
 suite("Just Formatter Extension Tests", function () {
+	const loggerFilename = "../../logs/just-formatter.log"
 	const fixturesPath = path.join(__dirname, "../../test-fixtures");
 	const sampleFilePath = path.normalize(path.join(fixturesPath, `sample.justfile`));
 	const formattedSampleFilePath = path.normalize(path.join(fixturesPath, `/formatted.justfile`));
 
 	setup(async function () {
+		if (fs.existsSync(loggerFilename)) {
+			fs.unlinkSync(loggerFilename);
+		}
 		// Ensure the test fixture exists before running the tests.
 		if (!fs.existsSync(sampleFilePath)) {
 			throw new Error("Test fixture sample.justfile is missing.");

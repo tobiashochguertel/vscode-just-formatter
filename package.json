@@ -44,6 +44,12 @@
         ]
       }
     ],
+    "formatters": [
+      {
+        "selector": ["source.just"],
+        "provider": "./dist/formatter.js"
+      }
+    ],
     "configurationDefaults": {
       "[just]": {
         "editor.defaultFormatter": "TobiasHochguertel.just-formatter"
@@ -56,10 +62,10 @@
 
     "compile:esbuild": "del-cli ./out-esbuild && pnpm exec tsc -p tsconfig.esbuild.json",
     "compile:esbuild:watch": "del-cli ./out-esbuild && pnpm exec tsc -w -p tsconfig.esbuild.json",
-    "compile:dev": "del-cli ./out && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js",
-    "compile:dev:watch": "del-cli ./out && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --watch",
-    "compile:production": "del-cli ./out && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production",
-    "compile:production:watch": "del-cli ./out && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production --watch",
+    "compile:dev": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js",
+    "compile:dev:watch": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --watch",
+    "compile:production": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production",
+    "compile:production:watch": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production --watch",
 
     "checks": "npm-run-all -n -l -p \"checks:!(watch)\"",
     "checks:watch": "npm-run-all -n -l -p checks:*:watch",
