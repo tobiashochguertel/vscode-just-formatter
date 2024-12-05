@@ -58,11 +58,6 @@
       }
     }
   },
-  "vsce": {
-    "dependencies": true,
-    "yarn": false,
-    "pnpm": true
-  },
   "scripts": {
     "package": "pnpm run compile:production",
     "vscode:prepublish": "pnpm run package",
