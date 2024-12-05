@@ -64,12 +64,13 @@
     "pnpm": true
   },
   "scripts": {
-    "_package": "pnpm run compile:production",
-    "_vscode:prepublish": "pnpm run package",
-    "vscode:prepublish": "npm run esbuild-base -- --minify",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
-    "package": "pnpm vsce package --no-dependencies",
-    "publish": "pnpm vsce publish --no-dependencies",
+    "package": "pnpm run compile:production",
+    "vscode:prepublish": "pnpm run package",
+
+    "_vscode:prepublish": "npm run esbuild-base -- --minify",
+    "_esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+    "_package": "pnpm vsce package --no-dependencies",
+    "_publish": "pnpm vsce publish --no-dependencies",
 
     "compile:esbuild": "del-cli ./out-esbuild && pnpm exec tsc -p tsconfig.esbuild.json",
     "compile:esbuild:watch": "del-cli ./out-esbuild && pnpm exec tsc -w -p tsconfig.esbuild.json",
