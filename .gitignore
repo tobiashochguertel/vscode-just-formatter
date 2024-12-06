@@ -74,4 +74,4 @@ logs
 npm-node_modules
 pnpm-node_modules
 npm-package.json
-pnpm-package.json
+# pnpm-package.json

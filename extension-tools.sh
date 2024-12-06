@@ -589,21 +589,10 @@ do_status() {
 
     # Show backup status
     echo -e "\n${BOLD}Backup Status:${NC}"
-    echo -e "  pnpm-node_modules:   $(get_file_type "${BACKUP_FILES["node_modules"]}") ($(get_directory_size "${BACKUP_FILES["node_modules"]}"))"
-    echo -e "  pnpm-package.json:   $(get_file_type "${BACKUP_FILES["package.json"]}")"
-    echo -e "  npm-node_modules:    $(get_file_type "${BACKUP_FILES["npm_node_modules"]}") ($(get_directory_size "${BACKUP_FILES["npm_node_modules"]}"))"
-    echo -e "  npm-package.json:    $(get_file_type "${BACKUP_FILES["npm_package_json"]}")"
-
-    # Show VSIX package status
-    echo -e "\n${BOLD}VSIX Package Status:${NC}"
-    if compgen -G "*.vsix" >/dev/null; then
-        for vsix in *.vsix; do
-            local size=$(stat -f%z "$vsix" 2>/dev/null)
-            echo -e "  $vsix: $(format_size $size)"
-        done
-    else
-        echo -e "  ${GRAY}No VSIX packages found${NC}"
-    fi
+    echo -e "  pnpm-node_modules:   $(get_file_type "pnpm-node_modules") ($(get_directory_size "pnpm-node_modules"))"
+    echo -e "  pnpm-package.json:   $(get_file_type "pnpm-package.json")"
+    echo -e "  npm-node_modules:    $(get_file_type "npm-node_modules") ($(get_directory_size "npm-node_modules"))"
+    echo -e "  npm-package.json:    $(get_file_type "npm-package.json")"
 
     # Show package manager versions
     echo -e "\n${BOLD}Package Manager Versions:${NC}"
@@ -621,6 +610,17 @@ do_status() {
         echo -e "  node:              $(node --version 2>/dev/null || echo "${RED}error${NC}")"
     else
         echo -e "  node:              ${RED}not installed${NC}"
+    fi
+
+    # Show VSIX package status
+    echo -e "\n${BOLD}VSIX Package Status:${NC}"
+    if compgen -G "*.vsix" >/dev/null; then
+        for vsix in *.vsix; do
+            local size=$(stat -f%z "$vsix" 2>/dev/null)
+            echo -e "  $vsix: $(format_size $size)"
+        done
+    else
+        echo -e "  ${GRAY}No VSIX packages found${NC}"
     fi
 
     echo # Empty line at end
