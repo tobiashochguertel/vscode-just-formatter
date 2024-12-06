@@ -61,21 +61,38 @@ usage() {
     echo
     echo -e "${CYAN}Description:${NC}"
     echo "A tool for managing VSCode extension development workflow"
+    echo "Handles npm/pnpm environment switching and package creation"
     echo
     echo -e "${GREEN}Commands:${NC}"
-    echo "  package    Create a VSIX package for the extension"
-    echo "  status     Show project status"
+    echo "  package          Create a VSIX package for the extension (automatic process)"
+    echo "  status           Show project status"
+    echo "  switch-to-npm    Switch to npm environment"
+    echo "  switch-to-pnpm   Switch to pnpm environment"
+    echo "  npm-install      Run npm install (creates fresh npm-node_modules)"
+    echo "  npm-compile      Run npm compile command"
+    echo "  create-vsix      Create VSIX package"
     echo
     echo -e "${BLUE}Options:${NC}"
-    echo "  -h, --help      Show this help message"
-    echo "  --no-color      Disable color output"
-    echo "  -v, --verbose   Enable verbose output (default: false)"
-    echo "  --debug         Enable debug output (default: false)"
+    echo "  -h, --help       Show this help message"
+    echo "  --no-color       Disable color output"
+    echo "  -v, --verbose    Enable verbose output (default: false)"
+    echo "  --debug          Enable debug output (default: false)"
     echo
     echo -e "${BOLD}Examples:${NC}"
     echo
-    echo -e "   $(basename "$0") ${GREEN}package${NC}"
-    echo -e "   $(basename "$0") ${BLUE}--no-color${NC} ${GREEN}package${NC}"
+    echo -e "  # Automatic packaging process"
+    echo -e "  $(basename "$0") ${GREEN}package${NC}"
+    echo -e "  $(basename "$0") ${BLUE}--no-color${NC} ${GREEN}package${NC}"
+    echo
+    echo -e "  # Manual packaging process"
+    echo -e "  $(basename "$0") ${GREEN}switch-to-npm${NC}"
+    echo -e "  $(basename "$0") ${GREEN}npm-install${NC}"
+    echo -e "  $(basename "$0") ${GREEN}npm-compile${NC}"
+    echo -e "  $(basename "$0") ${GREEN}create-vsix${NC}"
+    echo -e "  $(basename "$0") ${GREEN}switch-to-pnpm${NC}"
+    echo
+    echo -e "  # Check status"
+    echo -e "  $(basename "$0") ${BLUE}--debug${NC} ${GREEN}status${NC}"
     echo
     echo -e "${GRAY}For more information, visit: https://github.com/yourusername/extension-tools${NC}"
 }
@@ -481,7 +498,7 @@ switch_to_npm() {
 
     # Always create a fresh npm-package.json from the pnpm source
     log_debug "Creating fresh npm-package.json"
-    
+
     # Remove existing npm-package.json if it exists
     if [ -f "npm-package.json" ]; then
         log_debug "Removing existing npm-package.json"
@@ -521,7 +538,7 @@ switch_to_pnpm() {
                 local npm_size pnpm_size
                 npm_size=$(du -s "npm-node_modules" 2>/dev/null | cut -f1)
                 pnpm_size=$(du -s "node_modules" 2>/dev/null | cut -f1)
-                
+
                 # If the new node_modules is significantly different in size, ask what to do
                 if [ $((npm_size - pnpm_size)) -gt 1000 ] || [ $((pnpm_size - npm_size)) -gt 1000 ]; then
                     if ask_user "Existing npm-node_modules seems different. Replace it with new node_modules?" "n"; then
@@ -677,7 +694,7 @@ do_package() {
     # Run npm install and package
     log_info "Running npm install and package"
     npm install || handle_error "npm install failed"
-    
+
     log_debug "After npm install:"
     check_node_modules_status
 
@@ -712,6 +729,46 @@ do_package() {
 
     log_success "VSIX package created successfully"
     log_debug "VSIX package creation completed"
+}
+
+# Manual packaging commands
+do_npm_install() {
+    log_debug "Running npm install"
+    check_node_modules_status
+
+    # Run npm install
+    log_info "Running npm install"
+    npm install || handle_error "npm install failed"
+
+    log_debug "After npm install:"
+    check_node_modules_status
+
+    # npm removes our symlink, so let's save the new modules and restore the symlink
+    if [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
+        log_debug "npm replaced our symlink with a directory, saving changes"
+        # Remove old npm-node_modules if it exists
+        if [ -d "npm-node_modules" ]; then
+            rm -rf "npm-node_modules"
+        fi
+        # Move the new node_modules to npm-node_modules
+        mv "node_modules" "npm-node_modules"
+        # Recreate the symlink
+        create_symlink "npm-node_modules" "node_modules"
+    fi
+
+    log_success "npm install completed"
+}
+
+do_npm_compile() {
+    log_debug "Running npm compile"
+    npm run package || handle_error "npm run package failed"
+    log_success "npm compile completed"
+}
+
+do_create_vsix() {
+    log_debug "Creating VSIX package"
+    vsce package || handle_error "vsce package failed"
+    log_success "VSIX package created"
 }
 
 # Status checking functions
@@ -856,7 +913,7 @@ main() {
 
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
-        case $1 in
+        case "$1" in
         -v | --verbose)
             VERBOSE=true
             shift
@@ -866,21 +923,52 @@ main() {
             VERBOSE=true
             shift
             ;;
-        package)
-            do_package
-            exit 0
-            ;;
-        status)
-            do_status
-            exit 0
-            ;;
         *)
-            log_error "Unknown command or option: $1"
-            usage
-            exit 1
+            # Store the command
+            if [ -z "$COMMAND" ]; then
+                COMMAND="$1"
+                shift
+            else
+                log_error "Unknown option: $1"
+                usage
+                exit 1
+            fi
             ;;
         esac
     done
+
+    # Execute the command
+    case "${COMMAND:-help}" in
+    "status")
+        do_status
+        ;;
+    "package")
+        do_package
+        ;;
+    "switch-to-npm")
+        switch_to_npm
+        ;;
+    "switch-to-pnpm")
+        switch_to_pnpm
+        ;;
+    "npm-install")
+        do_npm_install
+        ;;
+    "npm-compile")
+        do_npm_compile
+        ;;
+    "create-vsix")
+        do_create_vsix
+        ;;
+    "help")
+        usage
+        ;;
+    *)
+        log_error "Unknown command: ${COMMAND:-none}"
+        usage
+        exit 1
+        ;;
+    esac
 }
 
 # Execute main function with all arguments

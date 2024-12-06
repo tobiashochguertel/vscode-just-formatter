@@ -16,3 +16,14 @@ npm-node_modules/
 pnpm-node_modules/
 npm-package.json
 # pnpm-package.json
+enhancements-planning
+logs
+out
+out-esbuild
+test-user-data
+test-*/
+.bakignore
+.bashrc_test
+.prettierignore
+extension-tools.sh
+tsconfig.esbuild.json

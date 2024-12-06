@@ -58,6 +58,7 @@
     }
   },
   "scripts": {
+    "status": "./extension-tools.sh status",
     "package": "pnpm run compile:production",
     "vscode:prepublish": "pnpm run package",
     "compile:esbuild": "del-cli ./out-esbuild && tsc -p tsconfig.esbuild.json",
