@@ -30,13 +30,7 @@ export function formatDocument(document: vscode.TextDocument): Promise<vscode.Te
                         return resolve([]);
                     });
                 }
-                const fullRange = new vscode.Range(
-                    document.positionAt(0),
-                    document.positionAt(document.getText().length)
-                );
-                log('fullRange: ', rangeToString(fullRange));
                 log('stdout: ', stdout);
-                resolve([vscode.TextEdit.replace(fullRange, stdout)]);
             });
         } catch (err) {
             if (err instanceof Error) {

@@ -328,13 +328,10 @@ create_symlink() {
 }
 
 remove_symlink() {
-    local link_name=$1
-
+    local link_name="$1"
     if [ -L "$link_name" ]; then
         log_debug "Removing symlink: $link_name"
-        if ! rm "$link_name"; then
-            handle_error "Failed to remove symlink $link_name"
-        fi
+        rm "$link_name" || handle_error "Failed to remove symlink: $link_name"
         log_verbose "Removed symlink: $link_name"
     fi
 }
@@ -484,11 +481,19 @@ switch_to_npm() {
     remove_symlink "node_modules"
     remove_symlink "package.json"
 
-    # Handle package.json first
+    # Handle package.json
     if [ -f "package.json" ] && [ ! -L "package.json" ]; then
         # Regular package.json exists, save it as pnpm version
         log_debug "Saving regular package.json as pnpm version"
-        cp "package.json" "pnpm-package.json" || handle_error "Failed to save pnpm-package.json"
+        if [ -s "package.json" ]; then
+            # Only copy if file is not empty
+            cp "package.json" "pnpm-package.json" || handle_error "Failed to save pnpm-package.json"
+            rm "package.json" || handle_error "Failed to remove package.json"
+        else
+            # If empty, just remove it
+            log_debug "Removing empty package.json"
+            rm "package.json" || handle_error "Failed to remove empty package.json"
+        fi
     fi
 
     # Create npm-package.json from source
@@ -496,16 +501,12 @@ switch_to_npm() {
     if [ -f "pnpm-package.json" ]; then
         log_debug "Creating npm-package.json from pnpm-package.json"
         cp "pnpm-package.json" "npm-package.json" || handle_error "Failed to create npm-package.json from pnpm-package.json"
-    elif [ -f "package.json" ] && [ ! -L "package.json" ]; then
-        log_debug "Creating npm-package.json from regular package.json"
-        cp "package.json" "npm-package.json" || handle_error "Failed to create npm-package.json from package.json"
     else
         handle_error "No package.json source found to create npm version"
     fi
 
     # Modify the npm version and create symlink
     modify_npm_package_json
-    mv "package.json" "pnpm-package.json" || handle_error "Failed to move package.json to pnpm-package.json"
     create_symlink "npm-package.json" "package.json"
 
     # Handle node_modules

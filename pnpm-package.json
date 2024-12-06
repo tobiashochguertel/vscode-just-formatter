@@ -2,7 +2,7 @@
   "name": "just-formatter",
   "displayName": "just-formatter",
   "description": "A formatter plugin for justfiles",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "TobiasHochguertel",
   "author": {
     "name": "Tobias Hochgürtel",
