@@ -24,6 +24,11 @@ export const minilogger = (outputType: LoggerOutputType = LoggerOutputType.CONSO
         case LoggerOutputType.OUTPUT_CHANNEL:
             console.log("minilogger: ", outputType);
             const logPath = path.join(__dirname, '../logs/just-formatter.log');
+            const logDir = path.dirname(logPath);
+            if (!fs.existsSync(logDir)) {
+                fs.mkdirSync(logDir, { recursive: true });
+                console.log(`Log directory created: ${logDir}`);
+            }
             if (!fs.existsSync(logPath)) {
                 fs.writeFileSync(logPath, 'New Logfile\n');
                 console.log(`Logfile created!`);
