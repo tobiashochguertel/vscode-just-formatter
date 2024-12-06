@@ -1,7 +1,7 @@
 {
   "name": "just-formatter",
-  "displayName": "just-formatter",
-  "description": "A formatter plugin for justfiles",
+  "displayName": "Justfile Formatter",
+  "description": "A powerful formatter for Justfiles - automatically formats your Justfile scripts with proper indentation and consistent styling",
   "version": "0.0.3",
   "publisher": "TobiasHochguertel",
   "icon": "images/icon.png",

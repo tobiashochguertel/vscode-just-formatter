@@ -27,3 +27,4 @@ test-*/
 .prettierignore
 extension-tools.sh
 tsconfig.esbuild.json
+justfile
