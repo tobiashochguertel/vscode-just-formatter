@@ -71,6 +71,7 @@ usage() {
     echo "  npm-install      Run npm install (creates fresh npm-node_modules)"
     echo "  npm-compile      Run npm compile command"
     echo "  create-vsix      Create VSIX package"
+    echo "  convert-icon     Convert SVG icon to PNG and update package.json"
     echo
     echo -e "${BLUE}Options:${NC}"
     echo "  -h, --help       Show this help message"
@@ -93,6 +94,9 @@ usage() {
     echo
     echo -e "  # Check status"
     echo -e "  $(basename "$0") ${BLUE}--debug${NC} ${GREEN}status${NC}"
+    echo
+    echo -e "  # Convert SVG icon to PNG and update package.json"
+    echo -e "  $(basename "$0") ${GREEN}convert-icon${NC}"
     echo
     echo -e "${GRAY}For more information, visit: https://github.com/yourusername/extension-tools${NC}"
 }
@@ -883,16 +887,47 @@ do_status() {
     echo # Empty line at end
 }
 
+# Icon management functions
+convert_icon() {
+    local svg_path="images/icon.svg"
+    local png_path="images/icon.png"
+    
+    # Check if ImageMagick is installed
+    if ! command -v magick >/dev/null 2>&1; then
+        log_error "ImageMagick is not installed. Please install it first:"
+        log_error "brew install imagemagick"
+        return 1
+    fi
+    
+    # Check if SVG exists
+    if [ ! -f "$svg_path" ]; then
+        log_error "SVG icon not found at $svg_path"
+        return 1
+    fi
+    
+    # Create PNG directory if it doesn't exist
+    mkdir -p "$(dirname "$png_path")"
+    
+    # Convert SVG to PNG using modern magick syntax
+    magick "$svg_path" -background none -density 300 -resize 256x256 "$png_path"
+    if [ $? -ne 0 ]; then
+        log_error "Failed to convert SVG to PNG"
+        return 1
+    fi
+    
+    # Update package.json
+    local temp_file=$(mktemp)
+    jq '.icon = "images/icon.png" | .galleryBanner = {"color": "#2d2d2d", "theme": "dark"}' package.json > "$temp_file"
+    mv "$temp_file" package.json
+    
+    log_success "Successfully converted icon and updated package.json"
+    return 0
+}
+
 # Main script logic
 main() {
-    # Show help if no arguments
-    if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-        usage
-        exit 0
-    fi
-
-    check_dependencies
-
+    local command=""
+    
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -903,6 +938,10 @@ main() {
         -d | --debug)
             DEBUG=true
             VERBOSE=true
+            shift
+            ;;
+        convert-icon)
+            command="convert-icon"
             shift
             ;;
         *)
@@ -918,9 +957,8 @@ main() {
             ;;
         esac
     done
-
-    # Execute the command
-    case "${COMMAND:-help}" in
+    
+    case "$command" in
     "status")
         do_status
         ;;
@@ -941,6 +979,9 @@ main() {
         ;;
     "create-vsix")
         do_create_vsix
+        ;;
+    "convert-icon")
+        convert_icon
         ;;
     "help")
         usage

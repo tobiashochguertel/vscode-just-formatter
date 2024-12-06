@@ -4,6 +4,7 @@
   "description": "A formatter plugin for justfiles",
   "version": "0.0.3",
   "publisher": "TobiasHochguertel",
+  "icon": "images/icon.svg",
   "author": {
     "name": "Tobias Hochgürtel",
     "url": "https://github.com/tobiashochguertel"
