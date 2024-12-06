@@ -104,16 +104,151 @@ case ${BASH_VERSION%%.*} in
     ;;
 esac
 
+# Initialize backup file mappings
+init_backup_files() {
+    declare -gA BACKUP_FILES
+    BACKUP_FILES=(
+        ["node_modules"]="node_modules"
+        ["package.json"]="package.json"
+        ["npm_node_modules"]="npm-node_modules"
+        ["npm_package_json"]="npm-package.json"
+        ["pnpm_node_modules"]="pnpm-node_modules"
+        ["pnpm_package_json"]="pnpm-package.json"
+    )
+    log_debug "Backup files initialized"
+}
+
+# Detect and normalize the current project state
+detect_and_normalize_state() {
+    log "Detecting current project state..."
+    local current_state="unknown"
+    local is_npm=false
+    local is_pnpm=false
+
+    # Check for npm indicators
+    if [ -f "npm-package.json" ] || [ -d "npm-node_modules" ]; then
+        is_npm=true
+    fi
+
+    # Check for pnpm indicators
+    if [ -f "pnpm-package.json" ] || [ -d "pnpm-node_modules" ]; then
+        is_pnpm=true
+    fi
+
+    # Regular package.json is treated as pnpm
+    if [ -f "package.json" ] && [ ! -L "package.json" ]; then
+        is_pnpm=true
+    fi
+
+    # Determine current state
+    if [ "$is_npm" = true ] && [ "$is_pnpm" = false ]; then
+        current_state="npm"
+    elif [ "$is_npm" = false ] && [ "$is_pnpm" = true ]; then
+        current_state="pnpm"
+    elif [ "$is_npm" = true ] && [ "$is_pnpm" = true ]; then
+        current_state="mixed"
+    fi
+
+    log_debug "Detected state: $current_state"
+
+    # Handle node_modules directory
+    if [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
+        log_warning "Found non-symlink node_modules directory"
+
+        case $current_state in
+        "npm")
+            if [ ! -d "npm-node_modules" ]; then
+                log_debug "Moving node_modules to npm-node_modules"
+                mv "node_modules" "npm-node_modules" || handle_error "Failed to move node_modules to npm-node_modules"
+                create_symlink "npm-node_modules" "node_modules"
+            else
+                if ask_user "Both node_modules directory and npm-node_modules exist. Remove node_modules?" "n"; then
+                    rm -rf "node_modules" || handle_error "Failed to remove node_modules"
+                    create_symlink "npm-node_modules" "node_modules"
+                else
+                    handle_error "Cannot proceed with both node_modules directory and npm-node_modules"
+                fi
+            fi
+            ;;
+        "pnpm" | "unknown")
+            if [ ! -d "pnpm-node_modules" ]; then
+                log_debug "Moving node_modules to pnpm-node_modules"
+                mv "node_modules" "pnpm-node_modules" || handle_error "Failed to move node_modules to pnpm-node_modules"
+                create_symlink "pnpm-node_modules" "node_modules"
+            else
+                if ask_user "Both node_modules directory and pnpm-node_modules exist. Remove node_modules?" "n"; then
+                    rm -rf "node_modules" || handle_error "Failed to remove node_modules"
+                    create_symlink "pnpm-node_modules" "node_modules"
+                else
+                    handle_error "Cannot proceed with both node_modules directory and pnpm-node_modules"
+                fi
+            fi
+            ;;
+        *)
+            # Default to pnpm for mixed state
+            if [ ! -d "pnpm-node_modules" ]; then
+                log_debug "Moving node_modules to pnpm-node_modules (default choice)"
+                mv "node_modules" "pnpm-node_modules" || handle_error "Failed to move node_modules to pnpm-node_modules"
+                create_symlink "pnpm-node_modules" "node_modules"
+            fi
+            ;;
+        esac
+    fi
+
+    # Handle package.json
+    if [ -f "package.json" ] && [ ! -L "package.json" ]; then
+        log_warning "Found non-symlink package.json"
+        case $current_state in
+        "npm")
+            if [ ! -f "npm-package.json" ]; then
+                log_debug "Moving package.json to npm-package.json"
+                mv "package.json" "npm-package.json" || handle_error "Failed to move package.json to npm-package.json"
+                create_symlink "npm-package.json" "package.json"
+            else
+                if ask_user "Both package.json and npm-package.json exist. Remove package.json?" "n"; then
+                    rm -f "package.json" || handle_error "Failed to remove package.json"
+                    create_symlink "npm-package.json" "package.json"
+                else
+                    handle_error "Cannot proceed with both package.json and npm-package.json"
+                fi
+            fi
+            ;;
+        "pnpm" | "unknown" | "mixed")
+            # For unknown or mixed state, default to pnpm
+            if [ ! -f "pnpm-package.json" ]; then
+                log_debug "Moving package.json to pnpm-package.json"
+                mv "package.json" "pnpm-package.json" || handle_error "Failed to move package.json to pnpm-package.json"
+                create_symlink "pnpm-package.json" "package.json"
+            else
+                if ask_user "Both package.json and pnpm-package.json exist. Remove package.json?" "n"; then
+                    rm -f "package.json" || handle_error "Failed to remove package.json"
+                    create_symlink "pnpm-package.json" "package.json"
+                else
+                    handle_error "Cannot proceed with both package.json and pnpm-package.json"
+                fi
+            fi
+            ;;
+        esac
+    fi
+
+    # If state is still unknown but we moved files to pnpm, set it to pnpm
+    if [ "$current_state" = "unknown" ] && [ -f "pnpm-package.json" ]; then
+        current_state="pnpm"
+    fi
+
+    log_success "Project state normalized to: $current_state"
+    echo "$current_state"
+}
+
 # Initialize state tracking
 init_state() {
     ORIGINAL_STATE["has_node_modules"]=$([ -d "node_modules" ] && echo "true" || echo "false")
     ORIGINAL_STATE["has_package_json"]=$([ -f "package.json" ] && echo "true" || echo "false")
     ORIGINAL_STATE["current_dir"]=$(pwd)
+    ORIGINAL_STATE["project_state"]=$(detect_and_normalize_state)
+    ORIGINAL_STATE["is_packaging"]="false"
 
-    BACKUP_FILES["node_modules"]="pnpm-node_modules"
-    BACKUP_FILES["package.json"]="pnpm-package.json"
-    BACKUP_FILES["npm_node_modules"]="npm-node_modules"
-    BACKUP_FILES["npm_package_json"]="npm-package.json"
+    init_backup_files
 }
 
 # User interaction functions
@@ -160,9 +295,14 @@ create_symlink() {
         if ! ask_user "$link_name exists. Remove it?"; then
             handle_error "Cannot proceed without creating symlink $link_name"
         fi
-        rm -ri "$link_name"
+        log_verbose "User agreed to remove existing target"
+        if ! rm -ri "$link_name"; then
+            handle_error "Failed to remove $link_name"
+        fi
+        log_debug "Successfully removed existing target $link_name"
     fi
 
+    log_debug "Backing up $source to $target"
     if ln -s "$target" "$link_name"; then
         log_success "Created symlink: $link_name -> $target"
     else
@@ -318,9 +458,9 @@ switch_to_npm() {
     log "Switching to npm environment..."
     log_debug "Entering switch_to_npm function"
 
-    # Prepare both node_modules and package.json
-    prepare_environment "node_modules"
-    prepare_environment "package.json"
+    # First ensure we're in a normalized state
+    local current_state="${ORIGINAL_STATE["project_state"]}"
+    log_debug "Current state before switch: $current_state"
 
     # Remove any existing symlinks
     log_verbose "Removing any existing symlinks"
@@ -328,22 +468,40 @@ switch_to_npm() {
     remove_symlink "package.json"
 
     # Handle node_modules
-    if [ -d "${BACKUP_FILES["npm_node_modules"]}" ]; then
-        log_debug "Found existing npm node_modules, creating symlink"
-        create_symlink "${BACKUP_FILES["npm_node_modules"]}" "node_modules"
+    if [ -d "npm-node_modules" ]; then
+        log_debug "Found npm-node_modules, creating symlink"
+        create_symlink "npm-node_modules" "node_modules"
+    elif [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
+        # If we have a regular node_modules directory and npm-node_modules doesn't exist
+        log_debug "Moving existing node_modules to npm-node_modules"
+        mv "node_modules" "npm-node_modules" || handle_error "Failed to move node_modules to npm-node_modules"
+        create_symlink "npm-node_modules" "node_modules"
+    fi
+    # At this point, we should have npm-node_modules and a symlink to it
+
+    # Always create a fresh npm-package.json from the pnpm source
+    log_debug "Creating fresh npm-package.json"
+    
+    # Remove existing npm-package.json if it exists
+    if [ -f "npm-package.json" ]; then
+        log_debug "Removing existing npm-package.json"
+        rm -f "npm-package.json"
     fi
 
-    # Handle package.json
-    if [ -f "${BACKUP_FILES["npm_package_json"]}" ]; then
-        log_debug "Found existing npm package.json, creating symlink"
-        create_symlink "${BACKUP_FILES["npm_package_json"]}" "package.json"
+    # Create new npm-package.json from pnpm source
+    if [ -f "pnpm-package.json" ]; then
+        log_debug "Creating npm-package.json from pnpm-package.json"
+        cp "pnpm-package.json" "npm-package.json" || handle_error "Failed to create npm-package.json from pnpm-package.json"
+    elif [ -f "package.json" ] && [ ! -L "package.json" ]; then
+        log_debug "Creating npm-package.json from regular package.json"
+        cp "package.json" "npm-package.json" || handle_error "Failed to create npm-package.json from package.json"
     else
-        log_debug "No existing npm package.json, creating modified version"
-        # Create npm version of package.json if it doesn't exist
-        cp "${BACKUP_FILES["package.json"]}" "${BACKUP_FILES["npm_package_json"]}" || handle_error "Failed to create npm package.json"
-        modify_npm_package_json
-        create_symlink "${BACKUP_FILES["npm_package_json"]}" "package.json"
+        handle_error "No package.json source found to create npm version"
     fi
+
+    # Modify the npm version
+    modify_npm_package_json
+    create_symlink "npm-package.json" "package.json"
 
     log_debug "Exiting switch_to_npm function"
     log_success "Successfully switched to npm environment"
@@ -353,25 +511,69 @@ switch_to_pnpm() {
     log "Switching back to pnpm environment..."
     log_debug "Entering switch_to_pnpm function"
 
-    # Remove npm symlinks
-    log_verbose "Removing npm symlinks"
+    # First handle existing node_modules if it's a directory
+    if [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
+        log_warning "node_modules exists as directory"
+        # During package process, we know this is from npm install
+        if [ "${ORIGINAL_STATE["is_packaging"]}" = "true" ]; then
+            if [ -d "npm-node_modules" ]; then
+                log_debug "npm-node_modules already exists, checking if we should update it"
+                local npm_size pnpm_size
+                npm_size=$(du -s "npm-node_modules" 2>/dev/null | cut -f1)
+                pnpm_size=$(du -s "node_modules" 2>/dev/null | cut -f1)
+                
+                # If the new node_modules is significantly different in size, ask what to do
+                if [ $((npm_size - pnpm_size)) -gt 1000 ] || [ $((pnpm_size - npm_size)) -gt 1000 ]; then
+                    if ask_user "Existing npm-node_modules seems different. Replace it with new node_modules?" "n"; then
+                        log_debug "Replacing npm-node_modules with new node_modules"
+                        rm -rf "npm-node_modules"
+                        mv "node_modules" "npm-node_modules" || handle_error "Failed to move node_modules to npm-node_modules"
+                    else
+                        log_debug "Keeping existing npm-node_modules, removing node_modules"
+                        rm -rf "node_modules"
+                    fi
+                else
+                    log_debug "Keeping existing npm-node_modules, removing node_modules"
+                    rm -rf "node_modules"
+                fi
+            else
+                log_debug "Moving node_modules to npm-node_modules"
+                mv "node_modules" "npm-node_modules" || handle_error "Failed to move node_modules to npm-node_modules"
+            fi
+        else
+            # In other cases, we still ask to be safe
+            if [ ! -d "pnpm-node_modules" ]; then
+                log_debug "Moving node_modules to pnpm-node_modules"
+                mv "node_modules" "pnpm-node_modules" || handle_error "Failed to move node_modules to pnpm-node_modules"
+            else
+                if ask_user "node_modules exists but is not a symlink. Remove it?" "n"; then
+                    rm -rf "node_modules" || handle_error "Failed to remove node_modules"
+                else
+                    handle_error "Cannot proceed with existing node_modules directory"
+                fi
+            fi
+        fi
+    fi
+
+    # Remove any existing symlinks
+    log_verbose "Removing any existing symlinks"
     remove_symlink "node_modules"
     remove_symlink "package.json"
 
     # Create symlinks to pnpm files
-    if [ -d "${BACKUP_FILES["node_modules"]}" ]; then
-        log_debug "Creating symlink to pnpm node_modules"
-        create_symlink "${BACKUP_FILES["node_modules"]}" "node_modules"
+    if [ -d "pnpm-node_modules" ]; then
+        log_debug "Creating symlink to pnpm-node_modules"
+        create_symlink "pnpm-node_modules" "node_modules"
     else
-        log_error "pnpm node_modules backup not found!"
+        log_error "pnpm-node_modules not found!"
         handle_error "Cannot switch to pnpm environment"
     fi
 
-    if [ -f "${BACKUP_FILES["package.json"]}" ]; then
-        log_debug "Creating symlink to pnpm package.json"
-        create_symlink "${BACKUP_FILES["package.json"]}" "package.json"
+    if [ -f "pnpm-package.json" ]; then
+        log_debug "Creating symlink to pnpm-package.json"
+        create_symlink "pnpm-package.json" "package.json"
     else
-        log_error "pnpm package.json backup not found!"
+        log_error "pnpm-package.json not found!"
         handle_error "Cannot switch to pnpm environment"
     fi
 
@@ -451,55 +653,65 @@ restore_original_state() {
     log_success "Original state restored"
 }
 
+check_node_modules_status() {
+    log_debug "Checking node_modules status:"
+    if [ -L "node_modules" ]; then
+        log_debug "node_modules is a symlink pointing to: $(readlink node_modules)"
+    elif [ -d "node_modules" ]; then
+        log_debug "node_modules is a regular directory"
+    else
+        log_debug "node_modules does not exist"
+    fi
+}
+
 do_package() {
-    log "Starting package process..."
-    log_verbose "Initializing state"
-    init_state
+    log_debug "Starting package process"
+    check_node_modules_status
 
-    # Step 1: Switch to npm environment
-    log_verbose "Step 1: Switching to npm environment"
+    # Switch to npm environment
     switch_to_npm
-    log_debug "npm environment switch completed"
 
-    # Step 2: Run npm commands
-    log_verbose "Step 2: Running npm commands"
+    log_debug "After switch_to_npm:"
+    check_node_modules_status
+
+    # Run npm install and package
+    log_info "Running npm install and package"
+    npm install || handle_error "npm install failed"
     
-    # First ensure we have the correct node_modules symlink
-    if [ -d "npm-node_modules" ]; then
-        log_debug "Found existing npm-node_modules, ensuring correct symlink"
-        if [ -L "node_modules" ]; then
-            remove_symlink "node_modules"
-        elif [ -d "node_modules" ]; then
-            log_warning "node_modules exists as directory, backing it up"
-            backup_file "node_modules" "${BACKUP_FILES["node_modules"]}"
+    log_debug "After npm install:"
+    check_node_modules_status
+
+    # npm removes our symlink, so let's save the new modules and restore the symlink
+    if [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
+        log_debug "npm replaced our symlink with a directory, saving changes"
+        # Remove old npm-node_modules if it exists
+        if [ -d "npm-node_modules" ]; then
+            rm -rf "npm-node_modules"
         fi
+        # Move the new node_modules to npm-node_modules
+        mv "node_modules" "npm-node_modules"
+        # Recreate the symlink
         create_symlink "npm-node_modules" "node_modules"
     fi
 
-    log_debug "Starting npm install"
-    run_npm_install
-    log_debug "npm install completed"
+    npm run package || handle_error "npm run package failed"
 
-    log_debug "Starting VSIX package creation"
-    create_vsix_package
-    log_debug "VSIX package creation completed"
+    log_debug "After npm run package:"
+    check_node_modules_status
 
-    # Step 3: Switch back to pnpm environment
+    # Create VSIX package
+    log_info "Creating VSIX package"
+    vsce package || handle_error "vsce package failed"
+
+    log_debug "After vsce package:"
+    check_node_modules_status
+
+    # Switch back to pnpm environment
     log_verbose "Step 3: Switching back to pnpm environment"
     switch_to_pnpm
-    log_debug "pnpm environment switch completed"
 
-    # Step 4: Verify final state
-    log_verbose "Step 4: Verifying final pnpm state"
-    verify_pnpm_state
-    log_debug "Final pnpm state verification completed"
-
-    # Show success message and list the generated vsix file
-    log_success "Package command completed successfully!"
-    log_verbose "Listing generated VSIX package"
-    echo -e "${GREEN}Generated VSIX package:${NC}"
-    ls -l *.vsix
-    log_debug "Package process finished"
+    log_success "VSIX package created successfully"
+    log_debug "VSIX package creation completed"
 }
 
 # Status checking functions
@@ -617,6 +829,16 @@ do_status() {
         done
     else
         echo -e "  ${GRAY}No VSIX packages found${NC}"
+    fi
+
+    # Check npm-node_modules
+    if [ -d "npm-node_modules" ]; then
+        local npm_modules_size
+        npm_modules_size=$(du -sh "npm-node_modules" 2>/dev/null | cut -f1)
+        echo -e "\n${BLUE}npm-node_modules status:${NC}"
+        echo -e "  Size: ${npm_modules_size}"
+    else
+        echo -e "\n${YELLOW}Warning: npm-node_modules not found${NC}"
     fi
 
     echo # Empty line at end
