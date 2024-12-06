@@ -463,6 +463,19 @@ do_package() {
 
     # Step 2: Run npm commands
     log_verbose "Step 2: Running npm commands"
+    
+    # First ensure we have the correct node_modules symlink
+    if [ -d "npm-node_modules" ]; then
+        log_debug "Found existing npm-node_modules, ensuring correct symlink"
+        if [ -L "node_modules" ]; then
+            remove_symlink "node_modules"
+        elif [ -d "node_modules" ]; then
+            log_warning "node_modules exists as directory, backing it up"
+            backup_file "node_modules" "${BACKUP_FILES["node_modules"]}"
+        fi
+        create_symlink "npm-node_modules" "node_modules"
+    fi
+
     log_debug "Starting npm install"
     run_npm_install
     log_debug "npm install completed"
@@ -470,23 +483,6 @@ do_package() {
     log_debug "Starting VSIX package creation"
     create_vsix_package
     log_debug "VSIX package creation completed"
-
-    # Check if npm-node_modules already exists
-    if [ -e "npm-node_modules" ]; then
-        if ask_user "npm-node_modules already exists. Do you want to delete it?" "n"; then
-            rm -rf "npm-node_modules" || handle_error "Failed to delete existing npm-node_modules"
-            log_success "Deleted existing npm-node_modules"
-        else
-            handle_error "npm-node_modules already exists. Cannot proceed."
-        fi
-    fi
-
-    # Move node_modules to npm-node_modules if it's a directory and not a symlink
-    if [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
-        log_verbose "Moving node_modules to npm-node_modules"
-        mv "node_modules" "npm-node_modules" || handle_error "Failed to move node_modules"
-        log_success "Moved: node_modules → npm-node_modules"
-    fi
 
     # Step 3: Switch back to pnpm environment
     log_verbose "Step 3: Switching back to pnpm environment"

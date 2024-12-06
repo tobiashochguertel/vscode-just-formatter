@@ -4,5 +4,3 @@ out/test-logs
 test-workspace
 npm-node_modules
 pnpm-node_modules
-npm-package.json
-pnpm-package.json
