@@ -1,0 +1,111 @@
+{
+  "name": "just-formatter",
+  "displayName": "Justfile Formatter",
+  "description": "A powerful formatter for Justfiles - automatically formats your Justfile scripts with proper indentation and consistent styling",
+  "version": "0.0.4",
+  "publisher": "TobiasHochguertel",
+  "icon": "images/icon.png",
+  "author": {
+    "name": "Tobias Hochgürtel",
+    "url": "https://github.com/tobiashochguertel"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/tobiashochguertel/just-formatter",
+  "bugs": {
+    "url": "https://github.com/tobiashochguertel/just-formatter/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tobiashochguertel/just-formatter.git"
+  },
+  "engines": {
+    "vscode": "^1.94.0"
+  },
+  "categories": [
+    "Formatters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "formatter",
+    "just",
+    "justfile",
+    "vscode"
+  ],
+  "activationEvents": [
+    "onLanguage:just"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "just",
+        "aliases": [
+          "Justfile",
+          "just"
+        ],
+        "extensions": [
+          ".justfile",
+          ".just"
+        ]
+      }
+    ],
+    "formatters": [
+      {
+        "selector": [
+          "source.just"
+        ],
+        "provider": "./dist/formatter.js"
+      }
+    ],
+    "configurationDefaults": {
+      "[just]": {
+        "editor.defaultFormatter": "TobiasHochguertel.just-formatter"
+      }
+    }
+  },
+  "scripts": {
+    "status": "./extension-tools.sh status",
+    "package": "pnpm run compile:production",
+    "vscode:prepublish": "pnpm run package",
+    "vscode:uninstall": "node ./dist/lifecycle.js",
+    "compile:esbuild": "del-cli ./out-esbuild && tsc -p tsconfig.esbuild.json",
+    "compile:esbuild:watch": "del-cli ./out-esbuild && tsc -w -p tsconfig.esbuild.json",
+    "compile:dev": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js",
+    "compile:dev:watch": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --watch",
+    "compile:production": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production",
+    "compile:production:watch": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js --production --watch",
+    "checks": "npm-run-all -n -l -p \"checks:!(watch)\"",
+    "checks:watch": "npm-run-all -n -l -p checks:*:watch",
+    "checks:lint": "eslint --flag unstable_ts_config ./esbuild.ts ./src",
+    "checks:lint:watch": "fd --type f -e ts -e json -e mjs --hidden . | entr pnpm run checks:lint",
+    "checks:types": "tsc --noEmit",
+    "checks:types:watch": "tsc -w --noEmit",
+    "test": "npm-run-all checks compile:dev vsc-test",
+    "test:watch": "npm-run-all -n -l -s checks compile:dev -p vsc-test:watch checks:watch compile:dev:watch",
+    "vsc-test": "vscode-test",
+    "vsc-test:watch": "vscode-test --watch-files ./out -w"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "~20.17.9",
+    "@types/vscode": "^1.94.0",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.1",
+    "del-cli": "^6.0.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.16.0",
+    "eslint-import-resolver-typescript": "^3.7.0",
+    "eslint-plugin-import-x": "^4.5.0",
+    "globals": "^15.13.0",
+    "jiti": "^2.4.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.6.3"
+  },
+  "galleryBanner": {
+    "color": "#2d2d2d",
+    "theme": "dark"
+  }
+}

@@ -84,9 +84,13 @@ deploy: test
 
 ## Known Issues
 
-Please report any issues on our [GitHub repository](https://gitea.hochguertel.work/vscode/just-formatter).
+Please report any issues on our [GitHub repository](https://github.com/tobiashochguertel/vscode-just-formatter/issues).
 
 ## Release Notes
+
+### 0.0.4
+
+- Current release
 
 ### 0.0.3
 
@@ -101,7 +105,7 @@ Please report any issues on our [GitHub repository](https://gitea.hochguertel.wo
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. Visit our [GitHub repository](https://github.com/tobiashochguertel/vscode-just-formatter) for more information.
 
 ## License
 
