@@ -5,8 +5,6 @@
   "version": "0.0.4",
   "publisher": "TobiasHochguertel",
   "icon": "images/icon.png",
-  "baseContentUrl": "https://gitea.hochguertel.work/vscode/just-formatter/raw/main",
-  "baseImagesUrl": "https://gitea.hochguertel.work/vscode/just-formatter/raw/main",
   "author": {
     "name": "Tobias Hochgürtel",
     "url": "https://github.com/tobiashochguertel"
