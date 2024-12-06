@@ -10,13 +10,13 @@
     "url": "https://github.com/tobiashochguertel"
   },
   "license": "MIT",
-  "homepage": "https://gitea.hochguertel.work/vscode/just-formatter",
+  "homepage": "https://github.com/tobiashochguertel/just-formatter",
   "bugs": {
-    "url": "https://gitea.hochguertel.work/vscode/just-formatter/issues"
+    "url": "https://github.com/tobiashochguertel/just-formatter/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://gitea.hochguertel.work/vscode/just-formatter.git"
+    "url": "https://github.com/tobiashochguertel/just-formatter.git"
   },
   "engines": {
     "vscode": "^1.94.0"
