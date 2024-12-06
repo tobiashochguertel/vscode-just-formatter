@@ -1,19 +1,6 @@
 # Justfile Formatter
 
-<!-- markdownlint-disable MD033 -->
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="128" height="128" version="1.1" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-    <rect width="128" height="128" fill="#2d2d2d" rx="16"/>
-    <g fill="#fff">
-        <!-- Stylized "J" -->
-        <path d="M 70,30 V 80 C 70,90 65,98 55,98 45,98 40,90 40,80 H 50 C 50,85 52,88 55,88 58,88 60,85 60,80 V 30 Z"/>
-        <!-- Format lines -->
-        <rect x="75" y="40" width="30" height="6" rx="3"/>
-        <rect x="75" y="60" width="20" height="6" rx="3"/>
-        <rect x="75" y="80" width="25" height="6" rx="3"/>
-    </g>
-</svg>
-<!-- markdownlint-enable MD033 -->
+![Justfile Formatter Logo](images/icon.png){width=128 height=128}
 
 A VSCode extension that provides automatic formatting for [Justfiles](https://github.com/casey/just) - the modern command runner alternative to Make. This extension is built on top of the `just` command-line tool's `--fmt` feature, ensuring consistent and reliable formatting that matches the official just formatter.
 
