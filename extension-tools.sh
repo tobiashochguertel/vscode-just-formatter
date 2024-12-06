@@ -471,6 +471,23 @@ do_package() {
     create_vsix_package
     log_debug "VSIX package creation completed"
 
+    # Check if npm-node_modules already exists
+    if [ -e "npm-node_modules" ]; then
+        if ask_user "npm-node_modules already exists. Do you want to delete it?" "n"; then
+            rm -rf "npm-node_modules" || handle_error "Failed to delete existing npm-node_modules"
+            log_success "Deleted existing npm-node_modules"
+        else
+            handle_error "npm-node_modules already exists. Cannot proceed."
+        fi
+    fi
+
+    # Move node_modules to npm-node_modules if it's a directory and not a symlink
+    if [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
+        log_verbose "Moving node_modules to npm-node_modules"
+        mv "node_modules" "npm-node_modules" || handle_error "Failed to move node_modules"
+        log_success "Moved: node_modules → npm-node_modules"
+    fi
+
     # Step 3: Switch back to pnpm environment
     log_verbose "Step 3: Switching back to pnpm environment"
     switch_to_pnpm

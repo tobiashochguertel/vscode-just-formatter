@@ -12,3 +12,7 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+npm-node_modules/
+pnpm-node_modules/
+npm-package.json
+pnpm-package.json
