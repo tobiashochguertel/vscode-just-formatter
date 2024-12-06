@@ -472,7 +472,7 @@ verify_pnpm_state() {
 }
 
 switch_to_npm() {
-    log "Switching to npm environment..."
+    log_info "Switching to npm environment..."
     log_debug "Entering switch_to_npm function"
 
     # First ensure we're in a normalized state
@@ -484,28 +484,15 @@ switch_to_npm() {
     remove_symlink "node_modules"
     remove_symlink "package.json"
 
-    # Handle node_modules
-    if [ -d "npm-node_modules" ]; then
-        log_debug "Found npm-node_modules, creating symlink"
-        create_symlink "npm-node_modules" "node_modules"
-    elif [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
-        # If we have a regular node_modules directory and npm-node_modules doesn't exist
-        log_debug "Moving existing node_modules to npm-node_modules"
-        mv "node_modules" "npm-node_modules" || handle_error "Failed to move node_modules to npm-node_modules"
-        create_symlink "npm-node_modules" "node_modules"
+    # Handle package.json first
+    if [ -f "package.json" ] && [ ! -L "package.json" ]; then
+        # Regular package.json exists, save it as pnpm version
+        log_debug "Saving regular package.json as pnpm version"
+        cp "package.json" "pnpm-package.json" || handle_error "Failed to save pnpm-package.json"
     fi
-    # At this point, we should have npm-node_modules and a symlink to it
 
-    # Always create a fresh npm-package.json from the pnpm source
+    # Create npm-package.json from source
     log_debug "Creating fresh npm-package.json"
-
-    # Remove existing npm-package.json if it exists
-    if [ -f "npm-package.json" ]; then
-        log_debug "Removing existing npm-package.json"
-        rm -f "npm-package.json"
-    fi
-
-    # Create new npm-package.json from pnpm source
     if [ -f "pnpm-package.json" ]; then
         log_debug "Creating npm-package.json from pnpm-package.json"
         cp "pnpm-package.json" "npm-package.json" || handle_error "Failed to create npm-package.json from pnpm-package.json"
@@ -516,9 +503,23 @@ switch_to_npm() {
         handle_error "No package.json source found to create npm version"
     fi
 
-    # Modify the npm version
+    # Modify the npm version and create symlink
     modify_npm_package_json
+    mv "package.json" "pnpm-package.json" || handle_error "Failed to move package.json to pnpm-package.json"
     create_symlink "npm-package.json" "package.json"
+
+    # Handle node_modules
+    if [ -d "npm-node_modules" ]; then
+        log_debug "Found npm-node_modules, creating symlink"
+        create_symlink "npm-node_modules" "node_modules"
+    elif [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
+        # If we have a regular node_modules directory, treat it as pnpm's
+        log_debug "Found regular node_modules, treating as pnpm directory"
+        mv "node_modules" "pnpm-node_modules" || handle_error "Failed to move node_modules to pnpm-node_modules"
+        # Create empty npm-node_modules, npm install will populate it
+        mkdir "npm-node_modules" || handle_error "Failed to create npm-node_modules"
+        create_symlink "npm-node_modules" "node_modules"
+    fi
 
     log_debug "Exiting switch_to_npm function"
     log_success "Successfully switched to npm environment"
@@ -681,6 +682,21 @@ check_node_modules_status() {
     fi
 }
 
+get_formatted_size() {
+    local size_kb=$(du -sk "$1" 2>/dev/null | cut -f1)
+    if [ -n "$size_kb" ]; then
+        if [ "$size_kb" -gt 1048576 ]; then  # > 1GB
+            echo "$(echo "scale=1; $size_kb/1048576" | bc)G"
+        elif [ "$size_kb" -gt 1024 ]; then   # > 1MB
+            echo "$(echo "scale=1; $size_kb/1024" | bc)M"
+        else
+            echo "${size_kb}K"
+        fi
+    else
+        echo "unknown"
+    fi
+}
+
 do_package() {
     log_debug "Starting package process"
     check_node_modules_status
@@ -788,7 +804,7 @@ get_file_type() {
     elif [ -L "$item" ]; then
         echo "${CYAN}symlink${NC} → $(get_symlink_target "$item")"
     elif [ -d "$item" ]; then
-        echo "${BLUE}directory${NC}"
+        echo "${BLUE}directory${NC} ($(get_formatted_size "$item"))"
     elif [ -f "$item" ]; then
         echo "${GREEN}file${NC}"
     else
@@ -817,29 +833,6 @@ determine_environment() {
     fi
 }
 
-format_size() {
-    local size=$1
-    if [ $size -ge 1073741824 ]; then
-        echo "$(printf "%.1f" $(echo "scale=1; $size/1073741824" | bc))G"
-    elif [ $size -ge 1048576 ]; then
-        echo "$(printf "%.1f" $(echo "scale=1; $size/1048576" | bc))M"
-    elif [ $size -ge 1024 ]; then
-        echo "$(printf "%.1f" $(echo "scale=1; $size/1024" | bc))K"
-    else
-        echo "${size}B"
-    fi
-}
-
-get_directory_size() {
-    local dir=$1
-    if [ -d "$dir" ]; then
-        local size=$(du -s "$dir" 2>/dev/null | cut -f1)
-        format_size $((size * 1024))
-    else
-        echo "N/A"
-    fi
-}
-
 do_status() {
     log "Checking project status..."
 
@@ -854,9 +847,9 @@ do_status() {
 
     # Show backup status
     echo -e "\n${BOLD}Backup Status:${NC}"
-    echo -e "  pnpm-node_modules:   $(get_file_type "pnpm-node_modules") ($(get_directory_size "pnpm-node_modules"))"
+    echo -e "  pnpm-node_modules:   $(get_file_type "pnpm-node_modules")"
     echo -e "  pnpm-package.json:   $(get_file_type "pnpm-package.json")"
-    echo -e "  npm-node_modules:    $(get_file_type "npm-node_modules") ($(get_directory_size "npm-node_modules"))"
+    echo -e "  npm-node_modules:    $(get_file_type "npm-node_modules")"
     echo -e "  npm-package.json:    $(get_file_type "npm-package.json")"
 
     # Show package manager versions
@@ -879,23 +872,11 @@ do_status() {
 
     # Show VSIX package status
     echo -e "\n${BOLD}VSIX Package Status:${NC}"
-    if compgen -G "*.vsix" >/dev/null; then
-        for vsix in *.vsix; do
-            local size=$(stat -f%z "$vsix" 2>/dev/null)
-            echo -e "  $vsix: $(format_size $size)"
-        done
+    local vsix_file=$(ls *.vsix 2>/dev/null | head -n 1)
+    if [ -n "$vsix_file" ]; then
+        echo -e "  $vsix_file: $(get_formatted_size "$vsix_file")"
     else
         echo -e "  ${GRAY}No VSIX packages found${NC}"
-    fi
-
-    # Check npm-node_modules
-    if [ -d "npm-node_modules" ]; then
-        local npm_modules_size
-        npm_modules_size=$(du -sh "npm-node_modules" 2>/dev/null | cut -f1)
-        echo -e "\n${BLUE}npm-node_modules status:${NC}"
-        echo -e "  Size: ${npm_modules_size}"
-    else
-        echo -e "\n${YELLOW}Warning: npm-node_modules not found${NC}"
     fi
 
     echo # Empty line at end

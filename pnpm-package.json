@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.94.0"
   },
   "categories": [
     "Formatters",
@@ -81,7 +81,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "~20.17.9",
-    "@types/vscode": "^1.95.0",
+    "@types/vscode": "^1.94.0",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^8.17.0",
     "@vscode/test-cli": "^0.0.10",
