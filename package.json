@@ -2,7 +2,7 @@
   "name": "just-formatter",
   "displayName": "Justfile Formatter",
   "description": "A powerful formatter for Justfiles - automatically formats your Justfile scripts with proper indentation and consistent styling",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "TobiasHochguertel",
   "icon": "images/icon.png",
   "author": {
