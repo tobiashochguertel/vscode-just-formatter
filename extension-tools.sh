@@ -686,9 +686,9 @@ check_node_modules_status() {
 get_formatted_size() {
     local size_kb=$(du -sk "$1" 2>/dev/null | cut -f1)
     if [ -n "$size_kb" ]; then
-        if [ "$size_kb" -gt 1048576 ]; then  # > 1GB
+        if [ "$size_kb" -gt 1048576 ]; then # > 1GB
             echo "$(echo "scale=1; $size_kb/1048576" | bc)G"
-        elif [ "$size_kb" -gt 1024 ]; then   # > 1MB
+        elif [ "$size_kb" -gt 1024 ]; then # > 1MB
             echo "$(echo "scale=1; $size_kb/1024" | bc)M"
         else
             echo "${size_kb}K"
