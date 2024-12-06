@@ -946,8 +946,8 @@ main() {
             ;;
         *)
             # Store the command
-            if [ -z "$COMMAND" ]; then
-                COMMAND="$1"
+            if [ -z "$command" ]; then
+                command="$1"
                 shift
             else
                 log_error "Unknown option: $1"
@@ -987,7 +987,7 @@ main() {
         usage
         ;;
     *)
-        log_error "Unknown command: ${COMMAND:-none}"
+        log_error "Unknown command: ${command:-none}"
         usage
         exit 1
         ;;
