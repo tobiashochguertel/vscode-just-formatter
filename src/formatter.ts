@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import * as vscode from 'vscode';
-import { documentToString, LoggerOutputType, minilogger, rangeToString } from "./utils/minilogger";
+import { documentToString, LoggerOutputType, minilogger } from "./utils/minilogger";
 
 export function formatDocument(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
     const log = minilogger(LoggerOutputType.OUTPUT_CHANNEL);
