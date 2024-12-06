@@ -2,13 +2,13 @@
 
 ![Justfile Formatter Logo](images/icon.png){width=128 height=128}
 
-A VSCode extension that provides automatic formatting for [Justfiles](https://github.com/casey/just) - the modern command runner alternative to Make.
+A VSCode extension that provides automatic formatting for [Justfiles](https://github.com/casey/just) - the modern command runner alternative to Make. This extension is built on top of the `just` command-line tool's `--fmt` feature, ensuring consistent and reliable formatting that matches the official just formatter.
 
 ## Features
 
 - **Automatic Formatting**: Format your Justfiles with a single command or on save
 - **Smart Indentation**: Proper indentation for recipe blocks and dependencies
-- **Consistent Styling**: Maintains consistent spacing and alignment
+- **Consistent Styling**: Maintains consistent spacing and alignment using `just --fmt`
 - **Fast and Reliable**: Built for performance and reliability
 - **Preserves Comments**: Keeps your documentation intact while formatting
 
@@ -70,14 +70,17 @@ deploy: test
 ## Requirements
 
 - VS Code 1.94.0 or newer
+- [just](https://github.com/casey/just) command-line tool version 1.36.0 or newer
+
+  ```bash
+  # Install just using cargo
+  cargo install just
+
+  # Verify installation and version
+  just -V  # Should output: just 1.36.0 or newer
+  ```
+
 - A Justfile in your workspace
-
-<!-- ## Extension Settings
-
-This extension contributes the following settings:
-
-- `just-formatter.formatOnSave`: Enable/disable automatic formatting on save
-- `just-formatter.indentSize`: Number of spaces for indentation (default: 4) -->
 
 ## Known Issues
 
