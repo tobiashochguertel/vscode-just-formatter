@@ -10,6 +10,14 @@
     "url": "https://github.com/tobiashochguertel"
   },
   "license": "MIT",
+  "homepage": "https://gitea.hochguertel.work/vscode/just-formatter",
+  "bugs": {
+    "url": "https://gitea.hochguertel.work/vscode/just-formatter/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitea.hochguertel.work/vscode/just-formatter.git"
+  },
   "engines": {
     "vscode": "^1.94.0"
   },
@@ -23,9 +31,6 @@
     "justfile",
     "vscode"
   ],
-  "repository": {
-    "url": "https://gitea.hochguertel.work/vscode/just-formatter.git"
-  },
   "activationEvents": [
     "onLanguage:just"
   ],
@@ -62,6 +67,7 @@
     "status": "./extension-tools.sh status",
     "package": "pnpm run compile:production",
     "vscode:prepublish": "pnpm run package",
+    "vscode:uninstall": "node ./dist/lifecycle.js",
     "compile:esbuild": "del-cli ./out-esbuild && tsc -p tsconfig.esbuild.json",
     "compile:esbuild:watch": "del-cli ./out-esbuild && tsc -w -p tsconfig.esbuild.json",
     "compile:dev": "del-cli ./out ./dist && pnpm run compile:esbuild && node ./out-esbuild/esbuild.js",
